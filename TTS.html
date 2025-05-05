@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Text to Speech</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      margin-bottom: 10px;
+    }
+    button, select, input[type=range] {
+      margin: 5px 5px 10px 0;
+    }
+    .text-item {
+      display: flex;
+      align-items: center;
+      margin: 5px 0;
+    }
+    .text-content {
+      flex: 1;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+  <textarea id="inputText" placeholder="Enter your text here..."></textarea>
+  <br />
+  <button onclick="splitText()">Split Text</button>
+  <label for="voiceSelect">Voice:</label>
+  <select id="voiceSelect"></select>
+  <label for="rateRange">Rate:</label>
+  <input type="range" id="rateRange" min="0.5" max="2" value="1" step="0.1">
+  <span id="rateValue">1.0</span>
+  <div id="textList"></div>
+
+  <script>
+    let voices = [];
+
+    function loadVoices() {
+      voices = speechSynthesis.getVoices();
+      const voiceSelect = document.getElementById("voiceSelect");
+      voiceSelect.innerHTML = "";
+      voices.forEach((voice, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = `${voice.name} (${voice.lang})`;
+        voiceSelect.appendChild(option);
+      });
+    }
+
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    document.getElementById("rateRange").addEventListener("input", (e) => {
+      document.getElementById("rateValue").textContent = e.target.value;
+    });
+
+    function splitText() {
+      const input = document.getElementById("inputText").value;
+      const lines = input.split(/[\n\.]+/).map(s => s.trim()).filter(Boolean);
+      const list = document.getElementById("textList");
+      list.innerHTML = "";
+
+      lines.forEach((line, index) => {
+        const row = document.createElement("div");
+        row.className = "text-item";
+
+        const textSpan = document.createElement("div");
+        textSpan.className = "text-content";
+        textSpan.textContent = line;
+
+        const playButton = document.createElement("button");
+        playButton.textContent = "Play";
+        playButton.onclick = () => speakText(line);
+
+        row.appendChild(textSpan);
+        row.appendChild(playButton);
+        list.appendChild(row);
+      });
+    }
+
+    function speakText(text) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      const selectedVoiceIndex = document.getElementById("voiceSelect").value;
+      const rate = parseFloat(document.getElementById("rateRange").value);
+      if (voices[selectedVoiceIndex]) {
+        utterance.voice = voices[selectedVoiceIndex];
+      }
+      utterance.rate = rate;
+      speechSynthesis.speak(utterance);
+    }
+  </script>
+</body>
+</html>
